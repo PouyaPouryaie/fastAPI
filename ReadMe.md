@@ -52,3 +52,27 @@ fastapi dev fast_api_sample.py
 # Server default
  Serving at: http://127.0.0.1:8000  
  API docs: http://127.0.0.1:8000/docs  
+
+
+# Deploy on AWS EC2
+1. create EC2 Instance with these specification
+   
+   - ubuntu instance - t2 micro
+   - key pair for connect through ssh
+   - network setting with open http, https, and ssh
+2. connect with ssh to instance
+3. run these scripts
+```shell
+   sudo apt-get update
+   sudo apt install -y python3-pip nginx python3-venv
+```
+4. config nginx to redirect external request to fastAPI app
+
+   - you can check .fastapi_nginx file
+   - you need to define that config in `/etc/nginx/sites_enabled`
+   - restart nginx service after config
+5. define a virtual environment and install requirements based on requirements.txt file
+   - `python -m pip install -r requirements.txt`
+6. run FastAPI app
+   - `fastapi dev fast_api_sample.py`
+

@@ -76,3 +76,24 @@ fastapi dev fast_api_sample.py
 6. run FastAPI app
    - `fastapi dev fast_api_sample.py`
 
+
+# Deploy on AWSLambda
+1. at first use mangum in the project and set the handler in your main file
+2. create requirements.txt file based on lib in your env
+   - `python -m pip freeze > requirements.txt`
+   - **you can remove unnecessary lib from `requirements.txt` after that file is created**
+3. build a package which name is **lib**, contains all the dependecies to upload on lambda function
+   - `python -m pip install -t lib -r requirements.txt`
+4. create a zip folder containing the **lib** folder and then update it by adding fast_api_sample to the zip folder
+   - `(cd lib; zip ../lambda_fastapi.zip -r .)`
+   - `zip lambda_fastapi.zip -u fast_api_sample.py`
+5. go to the AWS Lambda and create a function with these config
+   - choose python as Runtime
+   - enable function url
+   - choose NONE for Auth Type
+   - checked the configuration for CORS
+6. then upload the zip file **`(lambda_fastapi.zip)`**
+7. edit Handler of lambda function wiht the handler that define in your script
+   - eg: `fast_api_sample.handler`
+8. click on function URL link and test your app
+

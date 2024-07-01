@@ -97,3 +97,8 @@ fastapi dev fast_api_sample.py
    - eg: `fast_api_sample.handler`
 8. click on function URL link and test your app
 
+
+# Other command
+
+1. check s3 bucket -> `aws s3 ls`
+2. create bucket -> `aws s3 mb s3://fast-api-storage --region us-east-1`

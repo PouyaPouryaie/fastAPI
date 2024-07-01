@@ -7,6 +7,8 @@ from mangum import Mangum
 import os
 import json
 import random
+import boto3
+import botocore
 
 BOOKS_FILE = "books.json"
 
@@ -70,19 +72,54 @@ class BookStore:
         """
         books = {}
 
-        if os.path.exists(self.book_file):
-            with open(self.book_file, 'r') as f:
-                data = json.load(f)
+        s3 = boto3.client("s3")
 
-                for book_data in data:
-                    book = Book(
-                        name=book_data["name"],
-                        genre=book_data["genre"],
-                        price=book_data["price"],
-                        book_id=book_data["book_id"]
-                    )
-                    books[book.book_id] = book
-        return books
+        try:
+            s3.head_object(Bucket="fast-api-storage", Key=self.book_file)
+            print(f"Key: '{self.book_file}' found!")
+            s3_clientobj = s3.get_object(Bucket='fast-api-storage', Key=self.book_file)
+            s3_clientdata = s3_clientobj['Body'].read().decode('utf-8')
+            data = json.loads(s3_clientdata)
+
+            for book_data in data:
+                book = Book(
+                    name=book_data["name"],
+                    genre=book_data["genre"],
+                    price=book_data["price"],
+                    book_id=book_data["book_id"]
+                )
+                books[book.book_id] = book
+            
+            return books
+
+
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                print(f"Key: '{self.book_file}' does not exist!")
+                return books
+            else:
+                print("Something else went wrong")
+                raise
+
+        # if os.path.exists(self.book_file):
+        #     with open(self.book_file, 'r') as f:
+        #         data = json.load(f)
+
+        #         # s3.put_object(
+        #         #     Bucket="fast-api-storage",
+        #         #     Key=self.book_file,
+        #         #     Body=json.dumps(data)
+        #         # )
+
+        #         for book_data in data:
+        #             book = Book(
+        #                 name=book_data["name"],
+        #                 genre=book_data["genre"],
+        #                 price=book_data["price"],
+        #                 book_id=book_data["book_id"]
+        #             )
+        #             books[book.book_id] = book
+        # return books
 
 
     def get_all_books(self):
@@ -191,8 +228,26 @@ class BookStore:
         """
         Saves the books dictionary to the JSON file.
         """
-        with open(self.book_file, 'w') as f:
-            json.dump([book.to_dict() for book in self.books.values()], f)
+        # with open(self.book_file, 'w') as f:
+        #     json.dump([book.to_dict() for book in self.books.values()], f)
+
+        s3 = boto3.client("s3")
+
+        try:
+            s3.put_object(
+                Bucket="fast-api-storage",
+                Key=self.book_file,
+                Body=json.dumps([book.to_dict() for book in self.books.values()])
+            )
+
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                print(f"Key: '{self.book_file}' does not exist!")
+            else:
+                print("Something else went wrong")
+                raise
+
+
 
 bookstore = BookStore(BOOKS_FILE)
 
